@@ -1,0 +1,15 @@
+name: raw_author_nationality
+type: bq.seed
+
+parameters:
+  path: author_nationality_seed.csv
+  enforce_schema: true
+
+columns:
+  - name: author
+    type: string
+    checks:
+      - name: not_null
+      - name: unique
+  - name: nationality
+    type: string

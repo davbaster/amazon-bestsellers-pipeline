@@ -1,4 +1,4 @@
-.PHONY: infra-gcp infra-local pipeline dashboard test
+.PHONY: infra-gcp infra-local pipeline pipeline-cloud upload-raw dashboard test
 
 infra-gcp:
 	cd infrastructure/gcp && terraform apply
@@ -8,6 +8,12 @@ infra-local:
 
 pipeline:
 	bruin run
+
+pipeline-cloud:
+	bruin run pipeline/pipeline.yml
+
+upload-raw:
+	python3 pipeline/ingestion/upload_to_gcs.py
 
 dashboard:
 	streamlit run dashboard/app.py

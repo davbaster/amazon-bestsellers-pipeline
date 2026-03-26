@@ -1,0 +1,26 @@
+name: raw_bestsellers
+type: bq.seed
+
+parameters:
+  path: bestsellers_with_categories.csv
+  enforce_schema: true
+
+columns:
+  - name: Name
+    type: string
+    checks:
+      - name: not_null
+  - name: Author
+    type: string
+    checks:
+      - name: not_null
+  - name: User Rating
+    type: float
+  - name: Reviews
+    type: integer
+  - name: Price
+    type: integer
+  - name: Year
+    type: integer
+  - name: Genre
+    type: string

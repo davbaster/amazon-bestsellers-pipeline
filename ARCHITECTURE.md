@@ -1,18 +1,18 @@
 # Architecture
 
-## Data Engineering Architecture: Pandemic Trends
+## Data Engineering Architecture: Bestseller Analytics
 
-This project analyzes Amazon bestseller behavior across the pandemic era through a full DataOps workflow built on Bruin, Terraform, and GCP.
+This project analyzes Amazon bestseller behavior through a focused DataOps workflow built on Bruin, Terraform, and GCP.
 
 ## Overview
 
-The platform is designed to answer how book demand and category trends shifted before, during, and after COVID-19.
+The platform is designed to answer a small set of dataset-supported analytical questions around author frequency, nationality coverage, and genre dominance.
 
 At a high level, the system will:
 
-1. ingest source data into raw storage
+1. upload batch files into a cloud raw data lake
 2. standardize and clean records in staging models
-3. create analytical fact tables for trend analysis
+3. create analytical fact tables for author and genre analysis
 4. serve results to a Streamlit dashboard
 
 ## Technical Stack
@@ -34,8 +34,9 @@ The repository includes [`.github/workflows/main.yml`](/home/admin/data-engineer
 
 ### Cloud
 
-- Terraform provisions GCP resources such as storage, BigQuery datasets, and IAM bindings
-- Bruin orchestrates ingestion and transformation tasks
+- Terraform provisions GCP resources such as GCS, BigQuery datasets, and IAM bindings
+- a Python batch ingestion step uploads raw files into GCS
+- Bruin orchestrates the seed, ingestion, staging, dimension, and fact tasks
 - BigQuery stores analytical models used by the dashboard
 
 ### Local
@@ -59,7 +60,7 @@ Example:
 
 ```hcl
 resource "google_storage_bucket" "data_lake" {
-  name = "amazon-bestsellers-pandemia-data-lake"
+  name = "amazon-bestsellers-analytics-data-lake"
 }
 ```
 
@@ -70,46 +71,88 @@ Bruin task names should describe the action they perform.
 Examples:
 
 - `ingest_kaggle`
-- `transform_pandemic_trends`
+- `transform_genre_by_year`
 
 ## Data Layers
 
 - `raw_` tables preserve source fidelity for reproducibility
 - `stg_` tables normalize schemas, data types, and business logic inputs
-- `fct_` tables support final analysis across pandemic eras
+- `fct_` tables support final analytical outputs and dashboard-ready summaries
+
+## Author Enrichment Design
+
+To support author nationality analysis, the project adds a lightweight dimension flow:
+
+1. `dim_authors` extracts the distinct authors from `stg_bestsellers`
+2. `raw_author_nationality` stores the author-to-nationality lookup
+3. `dim_author_nationality` exposes the joined author dimension for downstream analysis
+
+This keeps source book records separate from slowly changing author metadata and makes it easier to improve enrichment quality over time.
+
+Current enrichment coverage:
+
+- `248` distinct author values identified in the source dataset
+- `248` rows curated in the nationality lookup seed
+- `7` rows still marked as `Unknown` for unresolved or non-person entities
 
 ## Data Modeling Logic
 
-The pipeline categorizes records into three distinct eras using a SQL transformation managed by Bruin.
+The transformation layer is organized around the supported business questions.
 
-### Era Definitions
+### Supported Outputs
 
-- Pre-Pandemic: year values earlier than 2020
-- During Pandemic: year values in 2020 and 2021
-- Post-Pandemic: year values after the pandemic period in the final analytical model
+- `fct_author_appearances` counts how often each author appears in the dataset
+- `fct_nationality_distribution` summarizes author nationality coverage and bestseller-row dominance
+- `fct_genre_overall` measures the overall fiction versus non-fiction split
+- `fct_genre_by_year` tracks genre counts and rankings for each year
+
+## Batch DAG
+
+The batch pipeline is intentionally multi-step so the orchestration layer is visible in the project:
+
+1. `raw_bestsellers` loads the source CSV into BigQuery
+2. `raw_author_nationality` loads the nationality lookup seed
+3. `ingest_raw_files` uploads source files to GCS as the raw data lake step
+4. `stg_bestsellers` standardizes the source schema
+5. `dim_authors` and `dim_author_nationality` build reusable dimensions
+6. `fct_author_appearances`, `fct_nationality_distribution`, `fct_genre_overall`, and `fct_genre_by_year` build dashboard-facing tables
+
+## Partitioning And Clustering Strategy
+
+The upstream query patterns are dominated by filters and aggregations on `year`, `genre`, `author`, and `nationality`.
+
+Chosen strategy:
+
+- `stg_bestsellers`: partition by `year`, cluster by `genre` and `author`
+- `fct_genre_by_year`: partition by `year`, cluster by `genre`
+- `fct_author_appearances`: cluster by `author`
+- `fct_nationality_distribution`: cluster by `nationality`
+
+This reduces scan costs for the dashboard and keeps the largest analytical tables aligned with the grouping dimensions used most often.
 
 ### Transformation Snippet (Bruin SQL)
 
 ```sql
--- transformations/fct_pandemic_analysis.sql
+-- transformations/fct_genre_by_year.sql
+WITH genre_counts AS (
+    SELECT
+        year,
+        genre,
+        COUNT(*) AS bestseller_rows
+    FROM {{ ref('stg_bestsellers') }}
+    GROUP BY year, genre
+)
+
 SELECT
-    name,
-    author,
-    genre,
     year,
-    CASE
-        WHEN year < 2020 THEN 'Pre-Pandemic'
-        WHEN year BETWEEN 2020 AND 2021 THEN 'During Pandemic'
-        ELSE 'Post-Pandemic'
-    END AS pandemic_era,
-    reviews,
-    user_rating
-FROM {{ ref('stg_bestsellers') }}
+    genre,
+    bestseller_rows
+FROM genre_counts
 ```
 
 ## Suggested Analytical Focus
 
-- category shifts across eras
-- changes in author concentration and repeat bestsellers
-- differences in pricing, rankings, and review signals over time
-- comparison of pre-pandemic, pandemic, and post-pandemic demand patterns
+- author concentration and repeat bestseller presence
+- nationality dominance in the dataset
+- overall genre balance
+- yearly genre shifts and turning points
