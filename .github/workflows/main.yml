@@ -9,24 +9,70 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Install Bruin CLI
         run: |
           curl -fsSL https://get.bruin-data.com/install.sh | bash
           echo "$HOME/.bruin/bin" >> "$GITHUB_PATH"
 
+      - name: Create CI Bruin configuration
+        run: |
+          cat > .bruin.yml <<EOF
+          default_environment: default
+
+          environments:
+            default:
+              connections:
+                google_cloud_platform:
+                  - name: gcp
+                    project_id: ${{ vars.GCP_PROJECT_ID }}
+                    location: ${{ vars.GCP_REGION }}
+                    service_account_file: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+          EOF
+
       - name: Check Bruin formatting
         run: bruin format --check
 
+      - name: Validate Bruin pipeline
+        run: bruin validate
+
       - name: Validate Bruin dry-run
-        run: bruin dry-run
+        run: bruin dry-run pipeline/pipeline.yml
 
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive
+
+      - name: Compile Python files
+        run: |
+          python -m py_compile \
+            dashboard/app.py \
+            pipeline/ingestion/enrich_author_nationality.py \
+            pipeline/ingestion/upload_to_gcs.py \
+            pipeline/assets/ingest_raw_files.py

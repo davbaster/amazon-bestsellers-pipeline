@@ -27,8 +27,10 @@ At a high level, the system will:
 The repository includes [`.github/workflows/main.yml`](/home/admin/data-engineering/amz-bestsellers-la/.github/workflows/main.yml) to automate core validation tasks:
 
 - run `bruin format --check` to enforce code quality
+- run `bruin validate` to verify pipeline structure
 - execute `bruin dry-run` to validate SQL lineage
 - run `terraform fmt -check -recursive` to enforce Terraform formatting
+- compile Python application and ingestion code
 
 ## Deployment Model
 
