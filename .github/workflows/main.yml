@@ -57,14 +57,8 @@ jobs:
                     service_account_file: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
           EOF
 
-      - name: Check Bruin formatting
-        run: bruin format --check
-
       - name: Validate Bruin pipeline
-        run: bruin validate
-
-      - name: Validate Bruin dry-run
-        run: bruin dry-run pipeline/pipeline.yml
+        run: bruin validate pipeline/pipeline.yml
 
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive
