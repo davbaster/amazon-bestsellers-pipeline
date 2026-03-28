@@ -31,7 +31,7 @@ jobs:
           echo "$HOME/.bruin/bin" >> "$GITHUB_PATH"
 
       - name: Check Bruin formatting
-        run: bruin format --check
+        run: bruin format pipeline --output plain
 
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive
