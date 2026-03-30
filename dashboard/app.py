@@ -182,8 +182,7 @@ def main() -> None:
     st.markdown(
         """
         <div class="caption-card">
-            Metrics are computed from the local CSV assets. Author spellings are source-faithful, so variants such as
-            <code>J. K. Rowling</code> and <code>J.K. Rowling</code> remain separate unless the dataset is normalized upstream.
+            Metrics are computed from the local CSV assets. Author spellings are source-faithful.
         </div>
         """,
         unsafe_allow_html=True,

@@ -4,16 +4,16 @@ This project builds a cloud-ready DataOps pipeline to analyze Amazon bestseller 
 
 ## Problem Description
 
-The project solves a simple but realistic analytics problem: turning a flat bestseller CSV into a reproducible cloud pipeline that supports author and genre analysis.
+The project solves a simple but realistic analytics problem: turning a flat bestseller CSV into a reproducible cloud pipeline that supports author and genre analysis. We enhanced the bestseller CSV by creating a seed that contains the nationality of all the authors.
 
-The business questions are:
+The business questions we are looking to answer are:
 
-- which authors appear most often in the bestseller dataset
-- what nationality dominates in the dataset
-- which genres dominate the dataset overall
-- which genres dominate the dataset per year
+- Which authors appear most often in the bestseller dataset?
+- What nationality dominates in the dataset?
+- Which genres dominate the dataset overall?
+- Which genres dominate the dataset per year?
 
-The pipeline takes local raw files, uploads them to a cloud data lake, loads them into a warehouse, transforms them into analytics tables, and exposes the outputs in a dashboard.
+The pipeline takes local raw files, uploads them to a cloud data lake (Google Cloud Bucket), loads them into the Google Cloud BigQuery warehouse, transforms them into analytics tables using Bruin, and exposes the outputs in a dashboard using Python Streamlit library.
 
 ## Demo Data Location
 
@@ -21,9 +21,28 @@ This is a demo course project for data-engineering-zoomcamp, so the raw input fi
 
 For each run:
 
-1. the source files start in `pipeline/assets/`
-2. they are uploaded to the GCS raw zone
-3. they are loaded and transformed in BigQuery
+1. The source files start in `pipeline/assets/`
+2. They are uploaded to the GCS raw zone
+3. They are loaded and transformed in BigQuery
+
+## Results:
+
+Dashboard author presence
+
+![Dashboard author presence](docs/images/step-00-dashboard-author-presence.png)
+
+Dashboard Author Nationality
+
+![Dashboard Author Nationality](docs/images/step-00-dashboard-author-nationality.png)
+
+Dashboard Genery Dominance
+
+![Dashboard Genery Dominance](docs/images/step-00-dashboard-genre-dominance.png)
+
+Dashboard Genery by Year
+
+![Dashboard Genery by Year](docs/images/step-00-dashboard-genre-by-year.png)
+
 
 ## Quick Start
 
@@ -220,14 +239,20 @@ Image placeholder:
 
 #### 5. Launch Dashboard
 
-```bash
-pip install streamlit
+Run the dashboard:
+
+```
 streamlit run dashboard/app.py
 ```
 
 Image placeholder:
 
-![Dashboard Placeholder](docs/images/step-04-dashboard.png)
+![Dashboard commands](docs/images/step-05-dashboard.png)
+
+Web page would look like:
+
+![Dashboard Page Placeholder](docs/images/step-05-dashboard-web.png)
+
 
 ### Optional: Create The Infrastructure With Terraform
 
