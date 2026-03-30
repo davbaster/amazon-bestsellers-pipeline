@@ -495,8 +495,8 @@ This satisfies the multiple-step DAG requirement and includes a raw data lake up
 
 The warehouse strategy is designed around the dashboard queries:
 
-- `stg_bestsellers` is partitioned by `year` and clustered by `genre, author`
-- `fct_genre_by_year` is partitioned by `year` and clustered by `genre`
+- `stg_bestsellers` is partitioned by `year_partition_date` and clustered by `genre, author`
+- `fct_genre_by_year` is partitioned by `year_partition_date` and clustered by `genre`
 - `fct_author_appearances` is clustered by `author`
 - `fct_nationality_distribution` is clustered by `nationality`
 

@@ -7,7 +7,7 @@ depends:
 materialization:
   type: table
   strategy: create+replace
-  partition_by: year
+  partition_by: year_partition_date
   cluster_by:
     - genre
 @bruin */
@@ -30,6 +30,7 @@ year_totals AS (
 
 SELECT
     c.year,
+    DATE(c.year, 1, 1) AS year_partition_date,
     c.genre,
     c.bestseller_rows,
     t.total_rows,

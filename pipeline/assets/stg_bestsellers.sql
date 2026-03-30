@@ -7,7 +7,7 @@ depends:
 materialization:
   type: table
   strategy: create+replace
-  partition_by: year
+  partition_by: year_partition_date
   cluster_by:
     - genre
     - author
@@ -18,9 +18,10 @@ SELECT
     TRIM(Author) AS author,
     TRIM(Genre) AS genre,
     Year AS year,
+    DATE(Year, 1, 1) AS year_partition_date,
     Reviews AS reviews,
     Price AS price,
-    `User Rating` AS user_rating
+    'User Rating' AS user_rating
 FROM raw.raw_bestsellers
 WHERE Name IS NOT NULL
   AND Author IS NOT NULL

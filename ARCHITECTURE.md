@@ -127,8 +127,8 @@ The upstream query patterns are dominated by filters and aggregations on `year`,
 
 Chosen strategy:
 
-- `stg_bestsellers`: partition by `year`, cluster by `genre` and `author`
-- `fct_genre_by_year`: partition by `year`, cluster by `genre`
+- `stg_bestsellers`: partition by `year_partition_date`, cluster by `genre` and `author`
+- `fct_genre_by_year`: partition by `year_partition_date`, cluster by `genre`
 - `fct_author_appearances`: cluster by `author`
 - `fct_nationality_distribution`: cluster by `nationality`
 
