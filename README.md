@@ -29,7 +29,36 @@ For each run:
 
 ### Cloud Deployment
 
-#### 1. Prerequisites
+#### 1. Manual Infrastructure Setup In GCP
+
+For this project, the recommended approach is to create the cloud infrastructure once with an admin or owner account, and then use GitHub Actions only for pipeline execution and smoke tests.
+
+Create these resources manually in Google Cloud, remember that all resources needs to be on the same region:
+
+1. create a GCS bucket for the raw data lake. For example, your-gcp-project-id-amz-bestsellers-raw
+
+  ![Bucket name](docs/images/step-01-gc-bucket-name.png)
+
+2. create a BigQuery dataset named `raw`
+
+3. create a BigQuery dataset named `analytics`
+  ![Analytics dataset](docs/images/step-01-gc-datasets.png)
+
+4. create a service account for the pipeline:
+
+    Grant the service account these permissions:
+    - `roles/bigquery.dataEditor`
+    - `roles/bigquery.jobUser`
+    - `roles/storage.objectAdmin` on the raw bucket
+
+    ![Service Account permissions](docs/images/step-01-gc-serviceAccount-roles.png)
+
+You can do this Manually from the Google Cloud console (https://console.cloud.google.com) or with `gcloud`.
+
+
+
+
+#### 2. Installing requirements to run the pipeline.
 
 
 - Install Terraform:
@@ -58,27 +87,41 @@ For each run:
 
 - Install Google Cloud SDK (`gcloud`)
 
-```
-sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
-```
-```
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-```
-```
-echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
-```
-```
-sudo apt-get update && sudo apt-get install google-cloud-sdk -y
-```
-Initialize Google Cloud, you will be asked to sign in using the Internet Browser
-```
-gcloud init
-```
-- Create or use an existing GCP project
+  ```
+  sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
+  ```
+  ```
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+  ```
+  ```
+  echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+  ```
+  ```
+  sudo apt-get update && sudo apt-get install google-cloud-sdk -y
+  ```
+  Initialize Google Cloud, you will be asked to sign in using the Internet Browser
+  ```
+  gcloud init
+  ```
+  Create or use an existing GCP project
+
 - Create or use a service account with the following permissions:
 
+  For your current project, it needs these permissions:
 
-- Download a GCP service account JSON key and save it as `service-account.json`
+    a- roles/bigquery.dataEditor
+      so Bruin can create and update tables in BigQuery
+    
+    b- roles/bigquery.jobUser
+
+      so Bruin can run queries and jobs
+    
+    c- roles/storage.objectAdmin on the raw GCS bucket
+
+      so the upload step can place files in the data lake
+
+
+  Download a GCP service account JSON key and save it as `service-account.json`
 - Copy `.bruin.yml.example` to `.bruin.yml` and fill in your GCP values
 
 Enable the required GCP APIs:
@@ -122,46 +165,6 @@ Reload your shell:
   uv pip install -r requirements.lock
   ```
 
-
-#### 2. Manual Infrastructure Setup In GCP
-
-For this project, the recommended approach is to create the cloud infrastructure once with an admin or owner account, and then use GitHub Actions only for pipeline execution and smoke tests.
-
-Create these resources manually in Google Cloud:
-
-1. create a GCS bucket for the raw data lake
-2. create a BigQuery dataset named `raw`
-3. create a BigQuery dataset named `analytics`
-4. create a service account for the pipeline
-5. grant the service account these permissions:
-   - `roles/bigquery.dataEditor`
-   - `roles/bigquery.jobUser`
-   - `roles/storage.objectAdmin` on the raw bucket
-
-You can do this from the console or with `gcloud`.
-
-Example bucket name:
-
-```bash
-your-gcp-project-id-amz-bestsellers-raw
-```
-
-Suggested BigQuery datasets:
-
-- `raw`
-- `analytics`
-
-Manual setup verification:
-
-```bash
-gcloud storage buckets list --project="your-gcp-project-id"
-bq ls --project_id "your-gcp-project-id"
-gcloud iam service-accounts list --project="your-gcp-project-id"
-```
-
-Image placeholder:
-
-![Manual GCP Setup Placeholder](docs/images/step-01-manual-gcp-setup.png)
 
 #### 3. Configure Bruin
 
