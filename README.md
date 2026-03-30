@@ -48,17 +48,32 @@ Create these resources manually in Google Cloud, remember that all resources nee
 
     Grant the service account these permissions:
     - `roles/bigquery.dataEditor`
+       Allows Bruin can create and update tables in BigQuery.
+
     - `roles/bigquery.jobUser`
+       Allows Bruin can run queries and jobs
+
     - `roles/storage.objectAdmin` on the raw bucket
+       Allows the upload step can place files in the data lake
 
     ![Service Account permissions](docs/images/step-01-gc-serviceAccount-roles.png)
 
-You can do this Manually from the Google Cloud console (https://console.cloud.google.com) or with `gcloud`.
+    Download the service account as json and save it as `service-account.json`
+
+    ![Download json](docs/images/step-01-gc-json-apikey.png) 
+
+
+    Remember to store the json credentials outside the project and set permissions (chmod 600 service-account.json) to restrict the usage only for the owner.
+
+
+You can create these resources manually from the Google Cloud console (https://console.cloud.google.com) or with `gcloud` commands.
 
 
 
 
 #### 2. Installing requirements to run the pipeline.
+
+In the local environment where you downloaded the repository install the following requirements.
 
 
 - Install Terraform:
@@ -103,47 +118,29 @@ You can do this Manually from the Google Cloud console (https://console.cloud.go
   ```
   gcloud init
   ```
-  Create or use an existing GCP project
-
-- Create or use a service account with the following permissions:
-
-  For your current project, it needs these permissions:
-
-    a- roles/bigquery.dataEditor
-      so Bruin can create and update tables in BigQuery
-    
-    b- roles/bigquery.jobUser
-
-      so Bruin can run queries and jobs
-    
-    c- roles/storage.objectAdmin on the raw GCS bucket
-
-      so the upload step can place files in the data lake
+  Select the project where your Google Cloud resources are located.
 
 
-  Download a GCP service account JSON key and save it as `service-account.json`
-- Copy `.bruin.yml.example` to `.bruin.yml` and fill in your GCP values
+  Run the following command to enable the required GCP APIs:
 
-Enable the required GCP APIs:
+    ```bash
+    gcloud services enable \
+      bigquery.googleapis.com \
+      iam.googleapis.com \
+      iamcredentials.googleapis.com \
+      sts.googleapis.com \
+      storage.googleapis.com
+    ```
 
-```bash
-gcloud services enable \
-  bigquery.googleapis.com \
-  iam.googleapis.com \
-  iamcredentials.googleapis.com \
-  sts.googleapis.com \
-  storage.googleapis.com
-```
+  Authenticate locally from command prompt:
 
-Authenticate locally:
+    ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/service-account.json"
+    gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+    gcloud config set project your-gcp-project-id
+  ```
 
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/service-account.json"
-gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-gcloud config set project your-gcp-project-id
-```
-
-- Install uv
+- Install uv to manage your virtual environment.
   ```
   curl -Ls https://astral.sh/uv/install.sh | bash
   ```
@@ -168,13 +165,15 @@ Reload your shell:
 
 #### 3. Configure Bruin
 
-```bash
-cp .bruin.yml.example .bruin.yml
-```
+- Copy .bruin.yml.example into .bruin.yml 
 
-Image placeholder:
+  ```bash
+  cp .bruin.yml.example .bruin.yml
+  ```
 
-![Bruin Config Placeholder](docs/images/step-02-bruin-config.png)
+- Fill .bruin.yml with all the Google Cloud Resources names.
+
+  ![Bruin Config example](docs/images/step-03-bruin-config.png)
 
 #### 4. Run the Pipeline
 
